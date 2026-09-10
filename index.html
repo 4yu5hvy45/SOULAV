@@ -96,29 +96,9 @@ main#top{position:relative;z-index:1;background:transparent}
    keeps whatever is there legible. Fixed + pointer-events:none so it never
    blocks taps; sits above page content but below the header/menu layers. */
 .viewport-edge-fade{position:fixed;left:0;right:0;z-index:60;pointer-events:none}
-.viewport-edge-fade-top{top:0;height:calc(48px + env(safe-area-inset-top));background:linear-gradient(180deg,rgba(6,10,22,.05) 0%,rgba(6,10,22,.04) 55%,transparent 100%)}
+.viewport-edge-fade-top{top:0;height:calc(48px + env(safe-area-inset-top));background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.045) 55%,transparent 100%)}
+.viewport-edge-fade-bottom{bottom:0;height:calc(40px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.045) 55%,transparent 100%)}
 @media(min-width:901px){.viewport-edge-fade{display:none}}
-
-/* Progressive blur at the bottom edge, replacing a flat gradient fade.
-   4 stacked layers, each blurring more and reaching further up the
-   screen than the last -- so the effective blur ramps up smoothly
-   toward the very edge instead of cutting to a hard blurred band.
-   No border, no fill color of its own (only a hint of tint on the
-   deepest layer for depth), so it reads as content softening into
-   the edge rather than a visible glass panel sitting on top of it. */
-.edge-blur-bottom{position:fixed;left:0;right:0;bottom:0;z-index:60;height:calc(120px + env(safe-area-inset-bottom));pointer-events:none;overflow:hidden}
-.edge-blur-bottom span{position:absolute;inset:0;display:block}
-.edge-blur-bottom span:nth-child(1){backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);mask-image:linear-gradient(to top,#000 0%,transparent 45%);-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 45%)}
-.edge-blur-bottom span:nth-child(2){backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);mask-image:linear-gradient(to top,#000 0%,transparent 62%);-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 62%)}
-.edge-blur-bottom span:nth-child(3){backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);mask-image:linear-gradient(to top,#000 8%,transparent 80%);-webkit-mask-image:linear-gradient(to top,#000 8%,transparent 80%)}
-.edge-blur-bottom span:nth-child(4){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);mask-image:linear-gradient(to top,#000 20%,transparent 100%);-webkit-mask-image:linear-gradient(to top,#000 20%,transparent 100%);background:linear-gradient(0deg,rgba(6,10,22,.10) 0%,transparent 85%)}
-@media(min-width:901px){.edge-blur-bottom{display:none}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  /* No backdrop-filter support: fall back to the old flat fade so the
-     bottom edge still gets *some* contrast help instead of nothing. */
-  .edge-blur-bottom{background:linear-gradient(0deg,rgba(6,10,22,.16) 0%,transparent 100%)}
-  .edge-blur-bottom span{display:none}
-}
 </style>
 <style id="soul-two-backgrounds">
 .ambient-bg{
@@ -442,18 +422,20 @@ main#top{position:relative;z-index:1;background:transparent}
 html,body{background:#06070c!important;overflow-x:hidden!important;}
 
 @media(max-width:600px){
-  /* ---- Hero: top-aligned, natural height. Title sits right after the
-     header, video comes right after the CTAs with a small capped gap,
-     and the hero's own box ends right where the video ends -- so the
-     client-logo section that follows in the DOM starts immediately
-     below it, with no forced full-screen stretch creating a gap on
-     either side. ---- */
+  /* ---- Hero: fills exactly one iPhone screen, content centered so the
+     video wall + clients never leave a dead gap at the bottom. ---- */
   .hero{
     position:relative!important;
     display:flex!important;
     flex-direction:column!important;
-    justify-content:flex-start!important;
-    min-height:0!important;
+    justify-content:center!important;
+    /* svh only -- NOT dvh. dvh recalculates every time Safari's URL bar
+       hides/shows while scrolling, and since the video is pinned to the
+       bottom of this box via justify-content:space-between, a dvh-driven
+       height change physically shifts the video up/down as you scroll.
+       svh is the stable "chrome always visible" height, so this box's
+       height (and therefore the video's position) never moves on scroll. */
+    min-height:100svh!important;
     height:auto!important;
     padding:calc(86px + env(safe-area-inset-top)) var(--pad) 8px!important;
     background:transparent!important;
@@ -505,17 +487,7 @@ html,body{background:#06070c!important;overflow-x:hidden!important;}
      page scroll (this replaced a body{background-attachment:fixed} rule
      elsewhere in the file, which is one of the more expensive things you
      can ask iOS Safari to repaint on every scroll frame — this single
-     fixed layer does the same job far more cheaply).
-
-     Grading is intentionally light-touch/cinematic: the source photo's
-     own dark corners and glowing bottom band do most of the work, so
-     this only nudges contrast/saturation slightly (brightness barely
-     touched) and darkens the top-left/top-right corners where the photo
-     is already dark (via ::after) instead of a flat overlay across the
-     whole frame -- the glow band stays close to full brightness. ::before
-     is a soft-light (not multiply) navy tint, which unifies the color
-     with the rest of the site without flattening the image's own
-     contrast the way a flat multiply does. */
+     fixed layer does the same job far more cheaply). */
   .ambient-bg{
     position:fixed!important;
     /* Exact viewport, not a percentage bleed -- percentages on a fixed
@@ -532,7 +504,7 @@ html,body{background:#06070c!important;overflow-x:hidden!important;}
     background:#05070b!important;
     transform:none!important;
     animation:none!important;
-    filter:saturate(109%) contrast(102%) brightness(.94)!important;
+    filter:saturate(112%) contrast(100%) brightness(.70)!important;
   }
   .ambient-bg .soul-detached-bg-media{
     position:absolute!important;
@@ -561,8 +533,8 @@ html,body{background:#06070c!important;overflow-x:hidden!important;}
      here in CSS (rather than relying on the scroll-handler JS to zero it
      out) means it's static from first paint, on every phone. */
   .ambient-bg .soul-detached-bg-media{transform:none!important;}
-  .ambient-bg::before{background:rgba(8,14,30,.34)!important;opacity:1!important;mix-blend-mode:soft-light!important;}
-  .ambient-bg::after{display:block!important;background:radial-gradient(120% 85% at 12% -6%,rgba(2,4,10,.34) 0%,transparent 52%),radial-gradient(120% 85% at 104% -6%,rgba(2,4,10,.30) 0%,transparent 52%),linear-gradient(180deg,rgba(2,4,10,.14) 0%,transparent 20%,transparent 80%,rgba(2,4,10,.07) 100%)!important;}
+  .ambient-bg::before{background:rgba(7,11,18,.30)!important;opacity:1!important;mix-blend-mode:multiply!important;}
+  .ambient-bg::after{display:block!important;background:linear-gradient(180deg,rgba(2,4,8,.30) 0%,rgba(2,4,8,.10) 18%,transparent 42%,transparent 82%,rgba(2,4,8,.10) 100%)!important;}
 
   /* ---- The three-panel video wall: edge-to-edge with the viewport
      (100vw, not 112vw) so it no longer overflows past the screen and
@@ -968,7 +940,7 @@ html,body{background:#06070c!important;overflow-x:hidden!important;}
 <div aria-hidden="true" class="ambient-grain"></div>
 <div aria-hidden="true" class="ambient-glass"></div>
 <div aria-hidden="true" class="viewport-edge-fade viewport-edge-fade-top"></div>
-<div aria-hidden="true" class="edge-blur-bottom"><span></span><span></span><span></span><span></span></div>
+<div aria-hidden="true" class="viewport-edge-fade viewport-edge-fade-bottom"></div>
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><symbol id="brand-mark" viewbox="0 0 1337 1176"><path d="M686,1176h-36c-18.18-7.36-31.11-21.73-33.88-41.62l-.13-348.87c-9.54-56.43-85.32-52.99-89.04,5.94-4.53,71.94,3.46,148.65.09,221.09-9.43,57.1-94.39,56.78-102.08-1-.87-138.14,1.96-276.67-1.42-414.58-13.45-50.26-86.96-43.35-90.58,8.49-4.76,68.33,3.63,142.18.08,211.08-5.89,58.92-91.71,61.36-101.07,3v-459.07c4.61-43.19,60.7-58.99,89.01-26.93,29.28,33.16-8.23,91.36,31.72,118.28,30.72,20.71,69.16.41,72.3-35.33l-.02-243.02c8.46-57.85,92.32-58.66,102.07-1l-.08,424.08c3.83,58.98,82.27,59.95,89.08,2.99l-.02-549.02c6.94-59.54,91.05-62.89,103.73-4.76l.27,234.73c9.25,56.01,85.76,53.04,90.03-4.95,2.44-33.12-3.86-72.8.07-104.93,6.6-53.93,96.08-54.66,101.92,1.85l-.02,340.02c5.01,57.07,88.33,55.09,93.02,1.05,4.2-48.42-4.46-103.72-.02-152.02,5.43-59.05,96.32-60.91,101.02,2.95v448.09c-4.33,66.55-94.87,62.54-100.93,7.85-4.04-36.4,2.64-79.71-.07-116.93-4.23-58.23-88.64-59.08-93.08,0l-.07,309.93c-9.89,55.98-91.59,55.36-101.79,0l-.06-542.94c-3.94-60.56-86.25-60.3-90.09-1l.09,662.09c-1.5,20.7-15.34,36.68-34.04,44.46Z" fill="currentColor"></path><path d="M80.78,460.28c31.55-3.79,56.82,16.52,59.21,48.23,3.86,51.32-2.9,107.23.06,159.03-4.34,66.58-98.85,65.46-103.04.94-.48-7.45.06-16.13-.06-23.94-.5-33.28,1.15-65.99,1.09-99.1-.04-23.11-5.49-47.75,10.54-67.37,7.1-8.69,20.99-16.46,32.2-17.8Z" fill="currentColor"></path><path d="M1285.65,681.65c-28.05,28.87-82.09,13.33-87.37-27.43l-.02-170.46c10.36-54.04,87.51-56.85,100.44-2.96-.65,54,5.32,114.06,1.28,167.69-.91,12.05-5.86,24.44-14.34,33.16Z" fill="currentColor"></path></symbol></svg>
 <header class="site-header">
 <div class="header-inner">
