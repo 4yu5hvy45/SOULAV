@@ -665,8 +665,11 @@ body{background:#06070c!important;overflow-x:hidden!important;}
 }
 </style>
 
-<meta name="theme-color" content="#06070c" media="(max-width: 600px)">
-
+<!-- Intentionally no forced theme-color on mobile: leaving this unset lets
+     iOS Safari auto-sample the color behind the toolbar/status bar as you
+     scroll, so the chrome blends into whatever section is on screen
+     (bright blue hero, dark sections further down, etc.) instead of
+     always painting a flat color that crops against the page. -->
 
 
 <style id="soulav-hero-fullscreen-v1">
