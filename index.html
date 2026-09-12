@@ -15,7 +15,7 @@ html{margin:0;padding:0;background:#06070c;color:var(--text);scroll-behavior:aut
 body{margin:0;padding:0;min-width:320px;min-height:100%;background:transparent;color:var(--text);font-family:Geist,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
 a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video,svg{max-width:100%}
 /* One background layer. It never participates in layout and never moves. */
-.ambient-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:none center/cover no-repeat;background-attachment:fixed;transform:none;filter:saturate(112%) contrast(100%) brightness(.68);animation:none}
+.ambient-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:#04124d none center/cover no-repeat;background-attachment:fixed;transform:none;filter:saturate(112%) contrast(100%) brightness(.68);animation:none}
 .ambient-bg::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:#0a0e18;mix-blend-mode:multiply;opacity:.48}.ambient-bg::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(140% 110% at 50% 38%,transparent 45%,rgba(4,6,12,.36) 100%),linear-gradient(180deg,rgba(4,6,12,.08) 0%,transparent 22%,transparent 70%,rgba(4,6,12,.22) 100%)}
 .grain-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.035;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .ambient-grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");background-size:180px 180px}.ambient-grain-fine{display:none}@media(prefers-reduced-motion:reduce){.ambient-grain{opacity:.05}}
@@ -100,7 +100,7 @@ main#top,#v1-pages{transition:opacity .19s ease}
 </style>
 <style id="soul-two-backgrounds">
 .ambient-bg{
-  background:none !important;
+  background:#04124d !important;
   overflow:hidden;
 }
 .ambient-bg .soul-detached-bg-media{
@@ -138,6 +138,14 @@ main#top,#v1-pages{transition:opacity .19s ease}
   .youtube-thumb:active img{transform:scale(1.02);filter:brightness(.92)}
   .archive-row:active{background:rgba(255,255,255,.045)}
   .hero-actions .btn,.pill,.services-explore-cta,.info-card,.service-page-card,.services .service{transition:background .2s ease,transform .2s ease,padding .2s ease,box-shadow .2s ease}
+  /* .ambient-glass animates background-position on a full-viewport fixed
+     layer with mix-blend-mode:overlay -- that's a full repaint (not a cheap
+     GPU composite like transform/opacity) running forever, every 26s loop,
+     whether or not the page is even scrolling. On a phone's weaker GPU this
+     competes with native momentum scrolling for the same frame budget and
+     is one of the more likely reasons scrolling reads as less smooth than
+     on desktop. It's a subtle desktop nicety, not worth that cost here. */
+  .ambient-glass{animation:none!important;background-position:20% 45%!important}
 }
 @media(max-width:900px){
   /* Auto-hide/reveal header on scroll direction — a native-scroll substitute
@@ -508,7 +516,7 @@ body{background:#06070c!important;overflow-x:hidden!important;}
     z-index:0!important;
     display:block!important;
     overflow:hidden!important;
-    background:#05070b!important;
+    background:#04124d!important;
     transform:none!important;
     animation:none!important;
     filter:saturate(109%) contrast(102%) brightness(.94)!important;
@@ -665,11 +673,17 @@ body{background:#06070c!important;overflow-x:hidden!important;}
 }
 </style>
 
-<!-- Intentionally no forced theme-color on mobile: leaving this unset lets
-     iOS Safari auto-sample the color behind the toolbar/status bar as you
-     scroll, so the chrome blends into whatever section is on screen
-     (bright blue hero, dark sections further down, etc.) instead of
-     always painting a flat color that crops against the page. -->
+<meta name="theme-color" content="#04124d" media="(max-width: 600px)">
+<!-- #04124d is sampled from the actual hero background image (deep navy
+     blue). Earlier this was hardcoded to #06070c (near-black), which is why
+     it clashed with the bright blue hero and read as a hard "cropped" edge
+     at the very top on iPhone. Also removing the tag entirely (tried
+     previously) doesn't help either: the hero's blue only exists as a photo
+     (no CSS background-color anywhere behind it), and Safari's own toolbar
+     tinting -- including the newer iOS 26 behavior -- keys off explicit
+     background-color values, not arbitrary image pixels, so with no color
+     specified it falls back to black. Setting the correct color explicitly
+     is what actually gets picked up. -->
 
 
 <style id="soulav-hero-fullscreen-v1">
@@ -2590,28 +2604,29 @@ body{background:#06070c!important;overflow-x:hidden!important;}
   },{passive:true});
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 <script id="soul-premium-lenis">
 (function(){
   function init(){
     if(!window.Lenis || window.__soulLenis) return;
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var lenis=new Lenis({
-      // Frame-linked lerp instead of a fixed duration ease: scroll position
-      // stays coupled to input each frame instead of continuing to glide
-      // after you stop, which was the main source of the laggy feel.
-      lerp:0.11,
+      // Matches the duration+easing model from the reference build the
+      // scroll feel is being matched against (rather than a frame-linked
+      // lerp) — an eased tween per scroll input reads closer to what was
+      // liked there. autoRaf:true lets Lenis drive its own frame loop
+      // instead of a hand-rolled requestAnimationFrame chain.
+      duration:1.2,
+      easing:function(t){return t===1?1:1-Math.pow(2,-10*t)},
       smoothWheel:true,
       smoothTouch:false,
       wheelMultiplier:1,
       touchMultiplier:1.15,
       infinite:false,
       syncTouch:false,
-      autoRaf:false
+      autoRaf:true
     });
     window.__soulLenis=lenis;
-    function raf(t){lenis.raf(t);requestAnimationFrame(raf)}
-    requestAnimationFrame(raf);
     document.addEventListener('click',function(e){
       var a=e.target.closest('a[href^="#"]');
       if(!a)return;
